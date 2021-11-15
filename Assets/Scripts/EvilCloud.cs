@@ -2,9 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MovingPlatform : MonoBehaviour
+public class EvilCloud : MonoBehaviour
 {
-
     [SerializeField] private Transform pos1, pos2;
     private float speed = 3f;
 
@@ -15,16 +14,26 @@ public class MovingPlatform : MonoBehaviour
     Vector2 prevPos;
     private bool moveToFirst = false;
 
+    private bool movingRight = true;
+    private bool moving = false;
+
 
     void Awake()
     {
         rb = GetComponentInChildren<Rigidbody2D>();
         nextPos = pos2.position;
-        prevPos = (Vector2)transform.position;
+        prevPos = (Vector2)rb.position;
         moveToFirst = false;
     }
 
-    void FixedUpdate()
+
+    void Update()
+    {
+        Go();
+        
+    }
+
+    private void Go()
     {
         if ((nextPos - prevPos).magnitude < 1.1f * Time.deltaTime * speed)
         {
@@ -40,9 +49,8 @@ public class MovingPlatform : MonoBehaviour
             }
         }
 
-        prevPos = (Vector2)transform.position;
+        prevPos = (Vector2)rb.position;
         rb.velocity = (nextPos - prevPos).normalized * speed;
-
     }
 
     private void OnDrawGizmos()

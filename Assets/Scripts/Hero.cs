@@ -7,8 +7,15 @@ using UnityEngine.UI;
 public class Hero : MonoBehaviour
 {
     //скорость персонажа
-    [SerializeField] private float speed = 0.5f;
+    [SerializeField] private float realSpeed = 0.5f;
+    private float speed;
+    private bool onTriggerSlowedCloudExit = false;
 
+
+    //здоровье
+    [SerializeField] private float maxHealth;
+    [SerializeField] private float health;
+    [SerializeField] private Slider healthSlider;
     //количество жизней
     private int lives = 0;
     [SerializeField] private Image[] brains;
@@ -18,6 +25,7 @@ public class Hero : MonoBehaviour
 
     private float HorizontalMove = 0;
     private bool FactingRight = true;
+    [SerializeField] private bool blockMoveX = false;
 
     private Rigidbody2D rb;
     private Animator anim;
@@ -33,13 +41,13 @@ public class Hero : MonoBehaviour
     [SerializeField] private Transform deadTriggerCheck;
     [SerializeField] private LayerMask whatIsDeadTrigger;
 
-
-
     private bool jumpControl;
     private float jumpTime = 0;
     private float disableTime = 0;
     private float jumpControlTime = 0.7f;
     private float disableControlTime = 0.5f;
+
+    private float timeLeft = 0;
 
     public static Hero Instance { get; set; }
 
@@ -52,6 +60,11 @@ public class Hero : MonoBehaviour
     //получение компонентов Rigidbody2D и SpriteRender
     private void Awake()
     {
+        maxHealth = 100;
+        health = maxHealth;
+        healthSlider.maxValue = maxHealth;
+        healthSlider.value = maxHealth;
+
         brains[0].enabled = false;
         brains[1].enabled = false;
         brains[2].enabled = false;
@@ -61,6 +74,7 @@ public class Hero : MonoBehaviour
         anim = GetComponent<Animator>();
         bodyCollider = GetComponent<CapsuleCollider2D>();
         sprite = GetComponentInChildren<SpriteRenderer>();
+        speed = realSpeed;
     }
     
     private void FixedUpdate()
@@ -69,25 +83,41 @@ public class Hero : MonoBehaviour
         CheckDeadTrigger();
         CheckGround();
         Jump();
-        Run();
+        Run(); 
+        
+        //замедление от облака
+        if (onTriggerSlowedCloudExit)
+        {
+            timeLeft += Time.deltaTime;
+            if (timeLeft >= 1)
+            {
+                this.speed = this.realSpeed;
+                timeLeft = 0;
+                onTriggerSlowedCloudExit = false;
+            }
+        }
     }
 
     void Update()
     {
         if (isDeadTrigger) Die();
-        
-        if (isGrounded) State = States.idle;
-        if (!isGrounded) State = States.jump;
 
-        if (disableTime <= 0)
+        if (!blockMoveX)
         {
-            HorizontalMove = Input.GetAxisRaw("Horizontal") * speed;
-        } else
-        {
-            HorizontalMove = 0;
-            disableTime -= Time.deltaTime;
+            if (isGrounded) State = States.idle;
+            if (!isGrounded) State = States.jump;
+
+            if (disableTime <= 0)
+            {
+                HorizontalMove = Input.GetAxisRaw("Horizontal") * speed;
+            }
+            else
+            {
+                HorizontalMove = 0;
+                disableTime -= Time.deltaTime;
+            }
+            if (isGrounded && HorizontalMove != 0) State = States.run;
         }
-        if (isGrounded && HorizontalMove != 0) State = States.run;
 
         //при нажатии на кнопку запускается метод run
         //if (Input.GetButton("Horizontal"))
@@ -96,23 +126,29 @@ public class Hero : MonoBehaviour
 
     private void Run()
     {
-        Vector2 targetVelocity = new Vector2(HorizontalMove * 10f, rb.velocity.y);
-        if (ground != null)
+        if (!blockMoveX)
         {
-            targetVelocity += ground.attachedRigidbody.velocity;
+            Vector2 targetVelocity = new Vector2(HorizontalMove * 10f, rb.velocity.y);
+            if (ground != null)
+            {
+                targetVelocity += ground.attachedRigidbody.velocity;
+            }
+            rb.velocity = targetVelocity;
+
+            if (HorizontalMove < 0 && FactingRight) Flip();
+            else if (HorizontalMove > 0 && !FactingRight) Flip();
         }
-        rb.velocity = targetVelocity;
-
-        if (HorizontalMove < 0 && FactingRight) Flip();
-        else if (HorizontalMove > 0 && !FactingRight) Flip();
-
     }
 
     private void Flip()
     {
-        FactingRight = !FactingRight;
-        Vector3 dir = transform.right * Input.GetAxis("Horizontal");
-        sprite.flipX = dir.x < 0.0f;
+        if (!blockMoveX)
+        {
+            FactingRight = !FactingRight;
+            /*Vector3 dir = transform.right * Input.GetAxis("Horizontal");
+            sprite.flipX = dir.x < 0.0f;*/
+            transform.localScale *= new Vector2(-1, 1);
+        }
     }
 
         private void Jump()
@@ -126,6 +162,8 @@ public class Hero : MonoBehaviour
 
         if (jumpControl)
         {
+
+            blockMoveX = false;
             if ((jumpTime += Time.deltaTime) < jumpControlTime)
             {
                 rb.AddForce(transform.up * jumpForce / (jumpTime * 10), ForceMode2D.Impulse);
@@ -144,7 +182,6 @@ public class Hero : MonoBehaviour
         isGrounded = new_ground;
         if (!isGrounded)
         {
-            State = States.jump;
             this.transform.parent = null;
             ground = null;
         } else
@@ -165,15 +202,24 @@ public class Hero : MonoBehaviour
     }
 
     //получение урона
-    public void GetDamage()
+    public void GetDamage(float damage)
     {
-        lives++;
-        Debug.Log(lives);
-        if (lives > 3)
+        health = health - damage;
+        healthSlider.value = health;
+        if (health <= 0)
         {
-            Die();
+            Die(); //надо сделать сохранение
+            //lives++;
         }
-        if (lives <= 3) brains[lives-1].enabled = true;
+
+        //система с одухотворенностью
+        /*if (lives <= 3) brains[lives - 1].enabled = true;
+        else if (lives > 3)
+        {
+            brains[0].enabled = false;
+            brains[1].enabled = false;
+            brains[2].enabled = false;
+        }*/
     }
 
     //разрушение объекта
@@ -193,19 +239,66 @@ public class Hero : MonoBehaviour
         }
     }
 
-    private void OnCollisionExit2D(Collision2D collision)
+    private void OnTriggerEnter2D(Collider2D collider)
     {
-        //if (collision.gameObject.name.Equals("Tile (5)"))
-        //{
-        //    this.transform.parent = null;
-        //}
+        if (collider.tag == "SlowingCloud" || collider.tag == "EvilCloud" && this.speed == realSpeed)
+        {
+            this.speed = this.speed * 0.6f;
+        }
+
+       
     }
 
+    private void OnTriggerStay2D(Collider2D collider)
+    {
+        if (collider.tag == "EvilCloud")
+        {
+            GetDamage(0.05f);
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collider)
+    {
+        if (collider.tag == "SlowingCloud" || collider.tag == "EvilCloud")
+        {
+            onTriggerSlowedCloudExit = true;
+            
+        }
+    }
+
+
+    [SerializeField] private Transform AddPosition;
+
+
+    private void LedgeGo()
+    {
+        transform.position = new Vector3(AddPosition.position.x, AddPosition.position.y, transform.position.z);
+    }
+    private void LedgeStop()
+    {
+        State = States.idle;
+        blockMoveX = false;
+    }
+
+    public void StartAnimLedgeGo()
+    {
+        blockMoveX = true;
+        rb.velocity = Vector2.zero;
+        State = States.getUp;
+
+    }
+
+
+    public Rigidbody2D getRb()
+    {
+        return rb;
+    }
 }
 
 public enum States
 {
     idle,
     jump,
-    run
+    run,
+    getUp
 }

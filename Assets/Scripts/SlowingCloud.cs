@@ -11,6 +11,7 @@ public class SlowingCloud : MonoBehaviour
     [SerializeField] private Transform startPos;
 
     Vector2 nextPos;
+    Vector2 prevPos;
     private bool moveToFirst = false;
 
     private bool movingRight = true;
@@ -21,16 +22,18 @@ public class SlowingCloud : MonoBehaviour
     {
         rb = GetComponentInChildren<Rigidbody2D>();
         nextPos = pos2.position;
+        prevPos = (Vector2)rb.position;
         moveToFirst = false;
     }
 
 
     void Update()
     {
-        if (moving) Go();
+        Go();
+        //if (moving) Go();
     }
 
-    private void OnTriggerEnter2D(Collider2D collider)
+    /*private void OnTriggerEnter2D(Collider2D collider)
     {
         if (collider.tag == "Player")
         {
@@ -38,17 +41,18 @@ public class SlowingCloud : MonoBehaviour
         }
     }
 
-   /* private void OnTriggerExit2D(Collider2D collider)
+    private void OnTriggerExit2D(Collider2D collider)
     {
-        if (collider.tag != "Player")
+        if (collider.tag == "Player")
         {
             moving = false;
+            rb.velocity = Vector2.zero;
         }
     }*/
 
     private void Go()
     {
-        if ((nextPos - (Vector2)rb.position).magnitude < 1.1f * Time.deltaTime * speed)
+        if ((nextPos - prevPos).magnitude < 1.1f * Time.deltaTime * speed)
         {
             if (moveToFirst)
             {
@@ -62,7 +66,8 @@ public class SlowingCloud : MonoBehaviour
             }
         }
 
-        rb.velocity = (nextPos - (Vector2)rb.position).normalized * speed;
+        prevPos = (Vector2)rb.position;
+        rb.velocity = (nextPos - prevPos).normalized * speed;
     }
 
     private void OnDrawGizmos()
