@@ -1146,6 +1146,7 @@ GameObject:
   - component: {fileID: 417108114}
   - component: {fileID: 417108113}
   - component: {fileID: 417108115}
+  - component: {fileID: 417108116}
   m_Layer: 6
   m_Name: AddPosition
   m_TagString: Untagged
@@ -1270,6 +1271,21 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.30490875, y: 0.18437386}
   m_EdgeRadius: 0
+--- !u!114 &417108116
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 417108111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b59921b65ba9a3a44a6400e8fec3bb17, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  grounds:
+    serializedVersion: 2
+    m_Bits: 256
 --- !u!1 &497823138
 GameObject:
   m_ObjectHideFlags: 0
@@ -2373,6 +2389,7 @@ MonoBehaviour:
   - {fileID: 497823141}
   - {fileID: 509267476}
   - {fileID: 949403554}
+  blockMoveX: 0
   groundCheck: {fileID: 1107234000}
   whatIsGround:
     serializedVersion: 2

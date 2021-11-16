@@ -129,10 +129,10 @@ public class Hero : MonoBehaviour
         if (!blockMoveX)
         {
             Vector2 targetVelocity = new Vector2(HorizontalMove * 10f, rb.velocity.y);
-            if (ground != null)
-            {
-                targetVelocity += ground.attachedRigidbody.velocity;
-            }
+            //if (ground != null)
+            //{
+            //    targetVelocity += ground.attachedRigidbody.velocity;
+            //}
             rb.velocity = targetVelocity;
 
             if (HorizontalMove < 0 && FactingRight) Flip();
@@ -162,7 +162,6 @@ public class Hero : MonoBehaviour
 
         if (jumpControl)
         {
-
             blockMoveX = false;
             if ((jumpTime += Time.deltaTime) < jumpControlTime)
             {
@@ -182,14 +181,12 @@ public class Hero : MonoBehaviour
         isGrounded = new_ground;
         if (!isGrounded)
         {
-            this.transform.parent = null;
             ground = null;
         } else
         {
             disableTime = 0;
             if (ground != new_ground)
             {
-                print(new_ground.name);
                 ground = new_ground;
             }
         }

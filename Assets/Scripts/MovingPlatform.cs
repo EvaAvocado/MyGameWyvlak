@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,7 +19,7 @@ public class MovingPlatform : MonoBehaviour
 
     void Awake()
     {
-        rb = GetComponentInChildren<Rigidbody2D>();
+        //rb = GetComponentInChildren<Rigidbody2D>();
         nextPos = pos2.position;
         prevPos = (Vector2)transform.position;
         moveToFirst = false;
@@ -26,7 +27,7 @@ public class MovingPlatform : MonoBehaviour
 
     void FixedUpdate()
     {
-        if ((nextPos - prevPos).magnitude < 1.1f * Time.deltaTime * speed)
+        if (Vector2.Distance(transform.position, nextPos) < Time.deltaTime * 2 * speed)
         {
             if (moveToFirst)
             {
@@ -40,9 +41,23 @@ public class MovingPlatform : MonoBehaviour
             }
         }
 
+        transform.position = Vector2.MoveTowards(transform.position, nextPos,
+            speed * Time.deltaTime);
         prevPos = (Vector2)transform.position;
-        rb.velocity = (nextPos - prevPos).normalized * speed;
+        //rb.velocity = (nextPos - prevPos).normalized * speed;
 
+    }
+
+    private void OnCollisionEnter2D(Collision2D other)
+    {
+        other.transform.SetParent(transform);
+        print("Set parent");
+    }
+
+    private void OnCollisionExit2D(Collision2D other)
+    {
+        other.transform.SetParent(null);
+        print("Set null");
     }
 
     private void OnDrawGizmos()
