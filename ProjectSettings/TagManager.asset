@@ -8,6 +8,7 @@ TagManager:
   - SlowingCloud
   - Plum
   - EvilCloud
+  - HealthCloud
   layers:
   - Default
   - TransparentFX

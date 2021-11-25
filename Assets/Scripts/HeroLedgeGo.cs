@@ -19,6 +19,10 @@ public class HeroLedgeGo : MonoBehaviour
         if((grounds.value & 1 << collision.gameObject.layer) != 0)
         {
             box.enabled = false;
+            if(hero.getRb().velocity.y <= 0)
+            {
+                hero.StartAnimLedgeGo();
+            }
         }
     }
 
@@ -30,13 +34,13 @@ public class HeroLedgeGo : MonoBehaviour
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    /*private void OnCollisionEnter2D(Collision2D collision)
     {
         if((grounds.value & 1 << collision.gameObject.layer) != 0 && hero.getRb().velocity.y <= 0)
         {
             hero.StartAnimLedgeGo();
         }
-    }
+    }*/
 
 
 }

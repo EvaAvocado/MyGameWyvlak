@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -64,6 +65,12 @@ public class Hero : MonoBehaviour
         health = maxHealth;
         healthSlider.maxValue = maxHealth;
         healthSlider.value = maxHealth;
+        
+        //сохранение текущего здоровья
+        if (!PlayerPrefs.HasKey("Health"))
+        {
+            PlayerPrefs.SetFloat("Health", maxHealth);
+        }
 
         brains[0].enabled = false;
         brains[1].enabled = false;
@@ -76,14 +83,23 @@ public class Hero : MonoBehaviour
         sprite = GetComponentInChildren<SpriteRenderer>();
         speed = realSpeed;
     }
-    
+
+    private void Start()
+    {
+        health = PlayerPrefs.GetFloat("Health");
+    }
+
+    private void LateUpdate()
+    {
+        Run(); 
+    }
+
     private void FixedUpdate()
     {
         //print(transform.position.x);
         CheckDeadTrigger();
         CheckGround();
         Jump();
-        Run(); 
         
         //замедление от облака
         if (onTriggerSlowedCloudExit)
@@ -118,22 +134,34 @@ public class Hero : MonoBehaviour
             }
             if (isGrounded && HorizontalMove != 0) State = States.run;
         }
+        
+        //установка слайдера здоровья в соответствии с текущим здоровьем
+        healthSlider.value = health;
+        //сохранение текущего здоровья
+        PlayerPrefs.SetFloat("Health", health);
 
         //при нажатии на кнопку запускается метод run
         //if (Input.GetButton("Horizontal"))
         //    Run();
+    }
+    
+    // "Вызывается перед закрытием приложения" (с) Олег
+    private void OnApplicationQuit()
+    {
+        PlayerPrefs.DeleteKey("Health");
     }
 
     private void Run()
     {
         if (!blockMoveX)
         {
-            Vector2 targetVelocity = new Vector2(HorizontalMove * 10f, rb.velocity.y);
+            transform.Translate(new Vector3(HorizontalMove * 10f * Time.deltaTime, 0, 0));
+            //Vector2 targetVelocity = new Vector2(HorizontalMove * 10f, rb.velocity.y);
             //if (ground != null)
             //{
             //    targetVelocity += ground.attachedRigidbody.velocity;
             //}
-            rb.velocity = targetVelocity;
+            //rb.velocity = targetVelocity;
 
             if (HorizontalMove < 0 && FactingRight) Flip();
             else if (HorizontalMove > 0 && !FactingRight) Flip();
@@ -177,11 +205,11 @@ public class Hero : MonoBehaviour
     //проверка земли под ногами
     private void CheckGround()
     {
-        Collider2D new_ground = Physics2D.OverlapBox(groundCheck.position, new Vector2(0.4f, 0.025f), 0.0f, whatIsGround);
+        Collider2D new_ground = Physics2D.OverlapBox(groundCheck.position, new Vector2(0.5f, 0.025f), 0.0f, whatIsGround);
         isGrounded = new_ground;
         if (!isGrounded)
         {
-            ground = null;
+            ground = null;      
         } else
         {
             disableTime = 0;
@@ -198,11 +226,15 @@ public class Hero : MonoBehaviour
         isDeadTrigger = Physics2D.OverlapCircle(groundCheck.position, 0.25f, whatIsDeadTrigger);
     }
 
+    public void HealthRecovery(float health)
+    {
+        this.health += health;
+    }
+
     //получение урона
     public void GetDamage(float damage)
     {
-        health = health - damage;
-        healthSlider.value = health;
+        health -= damage;
         if (health <= 0)
         {
             Die(); //надо сделать сохранение
@@ -240,7 +272,12 @@ public class Hero : MonoBehaviour
     {
         if (collider.tag == "SlowingCloud" || collider.tag == "EvilCloud" && this.speed == realSpeed)
         {
-            this.speed = this.speed * 0.6f;
+            this.speed *= 0.6f;
+        }
+
+        if (collider.tag == "HealthCloud" && this.speed == realSpeed)
+        {
+            this.speed *= 1.1f;
         }
 
        
@@ -250,13 +287,18 @@ public class Hero : MonoBehaviour
     {
         if (collider.tag == "EvilCloud")
         {
-            GetDamage(0.05f);
+            GetDamage(0.08f);
+        }
+
+        if (collider.tag == "HealthCloud")
+        {
+            HealthRecovery(0.1f);
         }
     }
 
     private void OnTriggerExit2D(Collider2D collider)
     {
-        if (collider.tag == "SlowingCloud" || collider.tag == "EvilCloud")
+        if (collider.tag == "SlowingCloud" || collider.tag == "EvilCloud" || collider.tag == "HealthCloud")
         {
             onTriggerSlowedCloudExit = true;
             

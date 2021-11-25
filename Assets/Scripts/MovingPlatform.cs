@@ -25,7 +25,7 @@ public class MovingPlatform : MonoBehaviour
         moveToFirst = false;
     }
 
-    void FixedUpdate()
+    void LateUpdate()
     {
         if (Vector2.Distance(transform.position, nextPos) < Time.deltaTime * 2 * speed)
         {
@@ -51,13 +51,11 @@ public class MovingPlatform : MonoBehaviour
     private void OnCollisionEnter2D(Collision2D other)
     {
         other.transform.SetParent(transform);
-        print("Set parent");
     }
 
     private void OnCollisionExit2D(Collision2D other)
     {
         other.transform.SetParent(null);
-        print("Set null");
     }
 
     private void OnDrawGizmos()
