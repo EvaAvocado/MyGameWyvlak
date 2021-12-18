@@ -5,7 +5,7 @@ using UnityEngine;
 public class SlowingCloud : MonoBehaviour
 {
     [SerializeField] private Transform pos1, pos2;
-    private float speed = 3f;
+    private float speed = 4f;
 
     private Rigidbody2D rb;
     [SerializeField] private Transform startPos;

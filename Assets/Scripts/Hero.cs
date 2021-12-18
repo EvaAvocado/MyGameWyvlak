@@ -8,7 +8,7 @@ using UnityEngine.UI;
 public class Hero : MonoBehaviour
 {
     //скорость персонажа
-    [SerializeField] private float realSpeed = 0.5f;
+    private float realSpeed = 0.55f;
     private float speed;
     private bool onTriggerSlowedCloudExit = false;
 
@@ -18,7 +18,7 @@ public class Hero : MonoBehaviour
     [SerializeField] private float health;
     [SerializeField] private Slider healthSlider;
     //количество жизней
-    private int lives = 0;
+    public int lives = 4;
     [SerializeField] private Image[] brains;
 
     //сила прыжка
@@ -39,7 +39,6 @@ public class Hero : MonoBehaviour
     [SerializeField] private LayerMask whatIsGround;
 
     private bool isDeadTrigger;
-    [SerializeField] private Transform deadTriggerCheck;
     [SerializeField] private LayerMask whatIsDeadTrigger;
 
     private bool jumpControl;
@@ -49,6 +48,9 @@ public class Hero : MonoBehaviour
     private float disableControlTime = 0.5f;
 
     private float timeLeft = 0;
+
+    public bool haveKey = false;
+    [SerializeField] private Image imageKey;
 
     public static Hero Instance { get; set; }
 
@@ -71,11 +73,18 @@ public class Hero : MonoBehaviour
         {
             PlayerPrefs.SetFloat("Health", maxHealth);
         }
+        
+        //сохранение одухотворенности
+        if (!PlayerPrefs.HasKey("Lives"))
+        {
+            PlayerPrefs.SetInt("Lives", lives);
+        }
 
-        brains[0].enabled = false;
-        brains[1].enabled = false;
-        brains[2].enabled = false;
-
+        if (!PlayerPrefs.HasKey("HaveKey"))
+        {
+            PlayerPrefs.SetInt("HaveKey", (haveKey ? 1 : 0));
+        }
+        
         Instance = this;
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
@@ -87,6 +96,10 @@ public class Hero : MonoBehaviour
     private void Start()
     {
         health = PlayerPrefs.GetFloat("Health");
+        lives = PlayerPrefs.GetInt("Lives");
+        if(PlayerPrefs.GetInt("HaveKey") == 1) haveKey = true;
+        else haveKey = false;
+        
     }
 
     private void LateUpdate()
@@ -100,7 +113,9 @@ public class Hero : MonoBehaviour
         CheckDeadTrigger();
         CheckGround();
         Jump();
-        
+        CheckLives();
+        CheckKey();
+
         //замедление от облака
         if (onTriggerSlowedCloudExit)
         {
@@ -114,13 +129,15 @@ public class Hero : MonoBehaviour
         }
     }
 
+   
+
     void Update()
     {
-        if (isDeadTrigger) Die();
+        if (isDeadTrigger) GetDamage(maxHealth);
 
         if (!blockMoveX)
         {
-            if (isGrounded) State = States.idle;
+            if (isGrounded) State = States.calm;
             if (!isGrounded) State = States.jump;
 
             if (disableTime <= 0)
@@ -134,11 +151,13 @@ public class Hero : MonoBehaviour
             }
             if (isGrounded && HorizontalMove != 0) State = States.run;
         }
-        
+
         //установка слайдера здоровья в соответствии с текущим здоровьем
         healthSlider.value = health;
         //сохранение текущего здоровья
         PlayerPrefs.SetFloat("Health", health);
+        
+        
 
         //при нажатии на кнопку запускается метод run
         //if (Input.GetButton("Horizontal"))
@@ -149,6 +168,8 @@ public class Hero : MonoBehaviour
     private void OnApplicationQuit()
     {
         PlayerPrefs.DeleteKey("Health");
+        PlayerPrefs.DeleteKey("Lives");
+        PlayerPrefs.DeleteKey("HaveKey");
     }
 
     private void Run()
@@ -167,7 +188,7 @@ public class Hero : MonoBehaviour
             else if (HorizontalMove > 0 && !FactingRight) Flip();
         }
     }
-
+    
     private void Flip()
     {
         if (!blockMoveX)
@@ -179,24 +200,27 @@ public class Hero : MonoBehaviour
         }
     }
 
-        private void Jump()
+    private void Jump()
     {
-        //if (Input.GetButtonDown("Jump"))
-        if (Input.GetKey(KeyCode.Space))
+        if (!blockMoveX)
         {
-            if (isGrounded) jumpControl = true;
-        }
-        else jumpControl = false;
-
-        if (jumpControl)
-        {
-            blockMoveX = false;
-            if ((jumpTime += Time.deltaTime) < jumpControlTime)
+            //if (Input.GetButtonDown("Jump"))
+            if (Input.GetKey(KeyCode.Space))
             {
-                rb.AddForce(transform.up * jumpForce / (jumpTime * 10), ForceMode2D.Impulse);
+                if (isGrounded) jumpControl = true;
             }
+            else jumpControl = false;
+
+            if (jumpControl)
+            {
+                blockMoveX = false;
+                if ((jumpTime += Time.deltaTime) < jumpControlTime)
+                {
+                    rb.AddForce(transform.up * jumpForce / (jumpTime * 10), ForceMode2D.Impulse);
+                }
+            }
+            else jumpTime = 0;
         }
-        else jumpTime = 0;
 
         //добавляем силы для прыжка
         //rb.AddForce(transform.up * jumpForce, ForceMode2D.Impulse);
@@ -231,33 +255,62 @@ public class Hero : MonoBehaviour
         this.health += health;
     }
 
+    public void CheckLives()
+    {
+        PlayerPrefs.SetInt("Lives", lives);
+        //система с одухотворенностью
+        switch (lives)
+        {
+            case 3:
+                brains[2].enabled = false;
+                brains[1].enabled = true;
+                brains[0].enabled = true;
+                break;
+            case 2: 
+                brains[2].enabled = false;
+                brains[1].enabled = false;
+                brains[0].enabled = true;
+                break;
+            case 1: 
+                brains[2].enabled = false;
+                brains[1].enabled = false;
+                brains[0].enabled = false;
+                break;
+            default:
+                lives = 4;
+                brains[2].enabled = true;
+                brains[1].enabled = true;
+                brains[0].enabled = true;
+                break;
+        }
+    }
     //получение урона
     public void GetDamage(float damage)
     {
         health -= damage;
         if (health <= 0)
         {
-            Die(); //надо сделать сохранение
-            //lives++;
+            lives--;
+            PlayerPrefs.SetInt("Lives", lives);
+            LevelAgain();
+            health = maxHealth;
         }
-
-        //система с одухотворенностью
-        /*if (lives <= 3) brains[lives - 1].enabled = true;
-        else if (lives > 3)
-        {
-            brains[0].enabled = false;
-            brains[1].enabled = false;
-            brains[2].enabled = false;
-        }*/
     }
 
     //разрушение объекта
-    public virtual void Die()
+    protected virtual void LevelAgain()
     {
         //Destroy(this.gameObject);
         if (SceneManager.GetActiveScene().name == "Level2") SceneManager.LoadScene("Level2");
         else if (SceneManager.GetActiveScene().name == "Level1") SceneManager.LoadScene("Level1");
 
+    }
+    
+    private void CheckKey()
+    {
+        if (haveKey) imageKey.enabled = true;
+        else imageKey.enabled = false;
+        PlayerPrefs.SetInt("HaveKey", (haveKey ? 1 : 0));
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -270,12 +323,12 @@ public class Hero : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collider)
     {
-        if (collider.tag == "SlowingCloud" || collider.tag == "EvilCloud" && this.speed == realSpeed)
+        if (collider.CompareTag("SlowingCloud") || collider.CompareTag("EvilCloud") && this.speed == realSpeed)
         {
-            this.speed *= 0.6f;
+            this.speed *= 0.65f;
         }
 
-        if (collider.tag == "HealthCloud" && this.speed == realSpeed)
+        if (collider.CompareTag("HealthCloud") && this.speed == realSpeed)
         {
             this.speed *= 1.1f;
         }
@@ -285,12 +338,12 @@ public class Hero : MonoBehaviour
 
     private void OnTriggerStay2D(Collider2D collider)
     {
-        if (collider.tag == "EvilCloud")
+        if (collider.CompareTag("EvilCloud"))
         {
             GetDamage(0.08f);
         }
 
-        if (collider.tag == "HealthCloud")
+        if (collider.CompareTag("HealthCloud"))
         {
             HealthRecovery(0.1f);
         }
@@ -298,7 +351,7 @@ public class Hero : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D collider)
     {
-        if (collider.tag == "SlowingCloud" || collider.tag == "EvilCloud" || collider.tag == "HealthCloud")
+        if (collider.CompareTag("SlowingCloud") || collider.CompareTag("EvilCloud") || collider.CompareTag("HealthCloud"))
         {
             onTriggerSlowedCloudExit = true;
             
@@ -307,15 +360,14 @@ public class Hero : MonoBehaviour
 
 
     [SerializeField] private Transform AddPosition;
-
-
+    
     private void LedgeGo()
     {
         transform.position = new Vector3(AddPosition.position.x, AddPosition.position.y, transform.position.z);
     }
     private void LedgeStop()
     {
-        State = States.idle;
+        State = States.calm;
         blockMoveX = false;
     }
 
@@ -336,8 +388,8 @@ public class Hero : MonoBehaviour
 
 public enum States
 {
-    idle,
+    calm,
     jump,
     run,
-    getUp
+    getUp,
 }

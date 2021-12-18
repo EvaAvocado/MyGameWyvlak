@@ -21,11 +21,11 @@ AnimationClip:
   - curve:
     - time: 0
       value: {fileID: 21300000, guid: a8e1c50b6faeb874aa5e7cd272c40860, type: 3}
-    - time: 0.21666667
+    - time: 0.18333334
       value: {fileID: 21300000, guid: a6aa2f1ed5edae1428ba586ccc189ce8, type: 3}
-    - time: 0.4
+    - time: 0.35
       value: {fileID: 21300000, guid: 349be9c2322fd7541bbc4e8c0eb804bf, type: 3}
-    - time: 0.65
+    - time: 0.56666666
       value: {fileID: 21300000, guid: 05a849bf671e11f45a108dab83a5bd68, type: 3}
     attribute: m_Sprite
     path: Player
@@ -55,7 +55,7 @@ AnimationClip:
     m_AdditiveReferencePoseClip: {fileID: 0}
     m_AdditiveReferencePoseTime: 0
     m_StartTime: 0
-    m_StopTime: 0.6666666
+    m_StopTime: 0.5833333
     m_OrientationOffsetY: 0
     m_Level: 0
     m_CycleOffset: 0
@@ -82,7 +82,7 @@ AnimationClip:
     floatParameter: 0
     intParameter: 0
     messageOptions: 0
-  - time: 0.65
+  - time: 0.56666666
     functionName: LedgeStop
     data: 
     objectReferenceParameter: {fileID: 0}

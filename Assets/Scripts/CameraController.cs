@@ -20,8 +20,8 @@ public class CameraController : MonoBehaviour
         if (player)
         {
             pos = player.position;
-            pos.z = -10f;
-            pos.y += 0.5f;
+            pos.z = -5f;
+            pos.y += 0.2f;
             transform.position = Vector3.Lerp(transform.position, pos, 3 * Time.deltaTime);
         }
 
