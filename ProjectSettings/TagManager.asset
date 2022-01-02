@@ -9,6 +9,8 @@ TagManager:
   - Plum
   - EvilCloud
   - HealthCloud
+  - StopCamera
+  - StopHeroX
   layers:
   - Default
   - TransparentFX

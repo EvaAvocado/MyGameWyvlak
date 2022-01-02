@@ -50,6 +50,7 @@ public class Hero : MonoBehaviour
     private float timeLeft = 0;
 
     public bool haveKey = false;
+    public bool inHouse;
     [SerializeField] private Image imageKey;
 
     public static Hero Instance { get; set; }
@@ -79,10 +80,16 @@ public class Hero : MonoBehaviour
         {
             PlayerPrefs.SetInt("Lives", lives);
         }
-
+        //сохранение ключа
         if (!PlayerPrefs.HasKey("HaveKey"))
         {
             PlayerPrefs.SetInt("HaveKey", (haveKey ? 1 : 0));
+        }
+        
+        //сохранение состояния inHouse
+        if (!PlayerPrefs.HasKey("InHouse"))
+        {
+            PlayerPrefs.SetInt("InHouse", (inHouse ? 1 : 0));
         }
         
         Instance = this;
@@ -97,9 +104,16 @@ public class Hero : MonoBehaviour
     {
         health = PlayerPrefs.GetFloat("Health");
         lives = PlayerPrefs.GetInt("Lives");
-        if(PlayerPrefs.GetInt("HaveKey") == 1) haveKey = true;
+        if (PlayerPrefs.GetInt("HaveKey") == 1) haveKey = true;
         else haveKey = false;
-        
+
+        if (PlayerPrefs.GetInt("InHouse") == 1) inHouse = true;
+        else inHouse = false;
+        if(inHouse && SceneManager.GetActiveScene().name == "Level2") transform.position = new Vector3(-2.5f, 11.4f, transform.position.z);
+        if (SceneManager.GetActiveScene().name == "Level1") inHouse = true;
+        else if (SceneManager.GetActiveScene().name == "Level2") inHouse = false;
+        PlayerPrefs.SetInt("InHouse", (inHouse ? 1 : 0));
+
     }
 
     private void LateUpdate()
@@ -128,9 +142,7 @@ public class Hero : MonoBehaviour
             }
         }
     }
-
-   
-
+    
     void Update()
     {
         if (isDeadTrigger) GetDamage(maxHealth);
@@ -157,7 +169,6 @@ public class Hero : MonoBehaviour
         //сохранение текущего здоровья
         PlayerPrefs.SetFloat("Health", health);
         
-        
 
         //при нажатии на кнопку запускается метод run
         //if (Input.GetButton("Horizontal"))
@@ -170,6 +181,7 @@ public class Hero : MonoBehaviour
         PlayerPrefs.DeleteKey("Health");
         PlayerPrefs.DeleteKey("Lives");
         PlayerPrefs.DeleteKey("HaveKey");
+        PlayerPrefs.DeleteKey("InHouse");
     }
 
     private void Run()
